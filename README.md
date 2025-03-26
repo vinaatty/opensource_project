@@ -7,4 +7,6 @@ CPU vs GPU 보고서
 ./cpu_exec > cpu_times.txt
 ./gpu_exec > gpu_times.txt
 
-#수행시간 그래프 그리기
+#수행시간 그래프 그리는 코드(plot_time.py) 실행
+>> python3 plot_times.py
+
