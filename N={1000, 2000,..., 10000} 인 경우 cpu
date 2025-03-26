@@ -1,0 +1,39 @@
+#include "../common/book.h"
+#include <stdlib.h>
+
+void add(int *a, int *b, int *c, int N) {
+    int tid = 0;
+    while (tid < N) {
+        c[tid] = a[tid] + b[tid];
+        tid += 1;
+    }
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s <N>\n", argv[0]);
+        return 1;
+    }
+    
+    int N = atoi(argv[1]); // 입력받은 N 값을 정수로 변환
+    int *a, *b, *c;
+    a = (int*)malloc(N * sizeof(int));
+    b = (int*)malloc(N * sizeof(int));
+    c = (int*)malloc(N * sizeof(int));
+
+    for (int i = 0; i < N; i++) {
+        a[i] = -i;
+        b[i] = i * i;
+    }
+
+    clock_t start = clock();
+    add(a, b, c, N);
+    clock_t end = clock();
+
+    printf("CPU 소요시간 (N=%d): %lf 초\n", N, (double)(end - start) / CLOCKS_PER_SEC);
+
+    free(a);
+    free(b);
+    free(c);
+    return 0;
+}
