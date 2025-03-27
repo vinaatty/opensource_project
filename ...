@@ -1,0 +1,18 @@
+pipeline 효과:여러개가 병렬적으로 수행(여려개를 한번에 수행시키는 효과)
+- dependency가 있어도 순서로 수행하므로 상관x
+**Multiple-issue : 한번에 instruction 2개 이상 수행시킬 수 있는 것
+- dependency가 없음
+- 동시에 여러개의 instruction이 한번에 살아있을 때
+- static / dynamic 
+-**out of order: 순서없이 수행하는 프로세서(노는애가 없도록= 꽉 채워서 병렬적으로 수행시킴)
+**superscalar 프로세서: dynamic multiple-issue가 가능한 구조를 가짐(최대한 dependency가 없도록 해야함)
+
+ILP( Instruction-Level Parallelism )
+- multiple issue를 정교하게 구현함
+- 구현방법: ILP, Superscalar execution(내부에 병렬적 구조 필요), 
+
+TLP( Thread-Level Parallelism )
+- thread memory를 사용함
+cf) thread:연속수행/ process: 실행되고있는 코드
+차이: thread: 할당된 메모리x(shared memory사용)/ 메모리1개 코드 여러개
+process: 자신만의 메모리 공간 사용/ 메모리 여러개 코드 여러개
