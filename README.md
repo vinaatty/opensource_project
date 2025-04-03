@@ -16,6 +16,8 @@ CPU vs GPU 보고서
 
 
 5. N=10000 인 경우 N/2로 나누어 두번 Kernel 을 수행하도록 작성한 코드 및 수행시간 결과
+![스크린샷 2025-04-03 15-19-29](https://github.com/user-attachments/assets/6d344912-852f-440d-8cdb-3926aa0b51b7)
+
    - book.h와 add_loop_cpu.cu 코드는 변화x(2의 코드와 같음). add_loop_gpu.cu 만 수정해서 출력.
    - Q.CPU 코드는 수정할 필요가 없는 이유?
      A: 
