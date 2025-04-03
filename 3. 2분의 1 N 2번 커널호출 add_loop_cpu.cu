@@ -24,7 +24,7 @@ int main(void) {
     printf("소요시간: %lf\n", (double)(end - start) / CLOCKS_PER_SEC);
 
     // 결과 확인
-    for (int i = 0; i < 10; i++) {  // 처음 10개만 출력
+    for (int i = 0; i < N; i++) {  // 처음 10개만 출력
         printf("%d + %d = %d\n", a[i], b[i], c[i]);
     }
 
