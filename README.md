@@ -6,6 +6,9 @@ CPU vs GPU 보고서
 ![스크린샷 2025-03-25 16-08-16](https://github.com/user-attachments/assets/f904b37d-0e72-4999-9c74-92efd007caed)
 
 3. N={1000, 2000,..., 10000} 인 경우 CPU 및 GPU 수행시간 결과 도표
+   ![스크린샷 2025-04-03 15-14-00](https://github.com/user-attachments/assets/8db40118-a0fc-4a93-8d9d-3913538defb3)
+![스크린샷 2025-04-03 15-13-10](https://github.com/user-attachments/assets/a1eacf9f-4cf0-43ce-8d6e-7fed84045da9)
+
   - nvcc add_loop_cpu.cu -o add_cpu 와 nvcc add_loop_gpu.cu add_gpu를 수행해서 컴파일
   - ./add.cpu 와 ./add.gpu 각각 실행하면 수행시간 출력
   - ./add_cpu > cpu_result.txt 와 ./add_gpu > gpu_result.txt 수행 후 paste cpu_result.txt gpu_result.txt | column -t 하면 정렬된 표 출력함
