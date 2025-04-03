@@ -1,52 +1,59 @@
 #include "../common/book.h"
-#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
-#define NUM_TESTS 10 // N 값 개수
-int N_values[NUM_TESTS] = {1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000};
+#define MAX_N 10000
 
-__global__ void add(int *a, int *b, int *c, int N) {
-    int tid = blockIdx.x;
-    if (tid < N)
+__global__ void add(int *a, int *b, int *c, int n) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid < n) {
         c[tid] = a[tid] + b[tid];
+    }
 }
 
 int main(void) {
-    for (int t = 0; t < NUM_TESTS; t++) {
-        int N = N_values[t];
-        int *a, *b, *c;
-        int *dev_a, *dev_b, *dev_c;
+    int *a, *b, *c;
+    int *dev_a, *dev_b, *dev_c;
+    size_t size;
 
-        a = (int*)malloc(N * sizeof(int));
-        b = (int*)malloc(N * sizeof(int));
-        c = (int*)malloc(N * sizeof(int));
+    printf("N, GPU Time (s)\n");
 
-        HANDLE_ERROR(cudaMalloc((void**)&dev_a, N * sizeof(int)));
-        HANDLE_ERROR(cudaMalloc((void**)&dev_b, N * sizeof(int)));
-        HANDLE_ERROR(cudaMalloc((void**)&dev_c, N * sizeof(int)));
+    for (int N = 1000; N <= MAX_N; N += 1000) {
+        size = N * sizeof(int);
+        a = (int *)malloc(size);
+        b = (int *)malloc(size);
+        c = (int *)malloc(size);
 
         for (int i = 0; i < N; i++) {
             a[i] = -i;
             b[i] = i * i;
         }
 
-        HANDLE_ERROR(cudaMemcpy(dev_a, a, N * sizeof(int), cudaMemcpyHostToDevice));
-        HANDLE_ERROR(cudaMemcpy(dev_b, b, N * sizeof(int), cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMalloc((void**)&dev_a, size));
+        HANDLE_ERROR(cudaMalloc((void**)&dev_b, size));
+        HANDLE_ERROR(cudaMalloc((void**)&dev_c, size));
+
+        HANDLE_ERROR(cudaMemcpy(dev_a, a, size, cudaMemcpyHostToDevice));
+        HANDLE_ERROR(cudaMemcpy(dev_b, b, size, cudaMemcpyHostToDevice));
 
         clock_t start = clock();
-        add<<<N, 1>>>(dev_a, dev_b, dev_c, N);
+        add<<<(N + 255) / 256, 256>>>(dev_a, dev_b, dev_c, N);
         cudaDeviceSynchronize();
         clock_t end = clock();
+        double gpu_time = (double)(end - start) / CLOCKS_PER_SEC;
 
-        printf("GPU 소요시간 (N=%d): %lf 초\n", N, (double)(end - start) / CLOCKS_PER_SEC);
+        HANDLE_ERROR(cudaMemcpy(c, dev_c, size, cudaMemcpyDeviceToHost));
 
-        HANDLE_ERROR(cudaMemcpy(c, dev_c, N * sizeof(int), cudaMemcpyDeviceToHost));
+        printf("%d, %lf\n", N, gpu_time);
 
-        free(a);
-        free(b);
-        free(c);
         HANDLE_ERROR(cudaFree(dev_a));
         HANDLE_ERROR(cudaFree(dev_b));
         HANDLE_ERROR(cudaFree(dev_c));
+        free(a);
+        free(b);
+        free(c);
     }
+
     return 0;
 }
+
