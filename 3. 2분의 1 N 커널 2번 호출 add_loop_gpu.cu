@@ -1,63 +1,52 @@
 #include "../common/book.h"
-#define N 10000
+#define N 10000  // N을 10000으로 설정
 
-__global__ void add(int *a, int *b, int *c) {
-    int tid = blockIdx.x;
-    if (tid < N/2) {
-        c[tid] = a[tid] + b[tid];
+__global__ void add(int *a, int *b, int *c, int start) {
+    int tid = blockIdx.x;  // 블록 인덱스를 사용
+    if (tid < N / 2) {
+        c[start + tid] = a[start + tid] + b[start + tid];
     }
 }
 
 int main(void) {
-    int a_1[N/2], b_1[N/2], c_1[N/2];
-    int a_2[N/2], b_2[N/2], c_2[N/2];
+    int a[N], b[N], c[N];
+    int *dev_a, *dev_b, *dev_c;
 
-    int *dev_a_1, *dev_b_1, *dev_c_1;
-    int *dev_a_2, *dev_b_2, *dev_c_2;
+    HANDLE_ERROR(cudaMalloc((void**)&dev_a, N * sizeof(int)));
+    HANDLE_ERROR(cudaMalloc((void**)&dev_b, N * sizeof(int)));
+    HANDLE_ERROR(cudaMalloc((void**)&dev_c, N * sizeof(int)));
 
-    HANDLE_ERROR(cudaMalloc((void**)&dev_a_1, N/2 * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&dev_b_1, N/2 * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&dev_c_1, N/2 * sizeof(int)));
-
-    HANDLE_ERROR(cudaMalloc((void**)&dev_a_2, N/2 * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&dev_b_2, N/2 * sizeof(int)));
-    HANDLE_ERROR(cudaMalloc((void**)&dev_c_2, N/2 * sizeof(int)));
-
-    for (int i = 0; i < N/2; i++) {
-        a_1[i] = -i;
-        b_1[i] = i * i;
-        a_2[i] = -(i + N/2);
-        b_2[i] = (i + N/2) * (i + N/2);
+    for (int i = 0; i < N; i++) {
+        a[i] = -i;
+        b[i] = i * i;
     }
 
-    HANDLE_ERROR(cudaMemcpy(dev_a_1, a_1, N/2 * sizeof(int), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(dev_b_1, b_1, N/2 * sizeof(int), cudaMemcpyHostToDevice));
-
-    HANDLE_ERROR(cudaMemcpy(dev_a_2, a_2, N/2 * sizeof(int), cudaMemcpyHostToDevice));
-    HANDLE_ERROR(cudaMemcpy(dev_b_2, b_2, N/2 * sizeof(int), cudaMemcpyHostToDevice));
+    HANDLE_ERROR(cudaMemcpy(dev_a, a, N * sizeof(int), cudaMemcpyHostToDevice));
+    HANDLE_ERROR(cudaMemcpy(dev_b, b, N * sizeof(int), cudaMemcpyHostToDevice));
 
     clock_t start = clock();
+    
+    // 첫 번째 Kernel 실행 (N/2 개만 처리)
+    add<<<N / 2, 1>>>(dev_a, dev_b, dev_c, 0);
+    cudaDeviceSynchronize();  // 동기화
 
-    add<<<N/2, 1>>>(dev_a_1, dev_b_1, dev_c_1);
-    cudaDeviceSynchronize();
-
-    add<<<N/2, 1>>>(dev_a_2, dev_b_2, dev_c_2);
-    cudaDeviceSynchronize();
-
+    // 두 번째 Kernel 실행 (나머지 N/2 개 처리)
+    add<<<N / 2, 1>>>(dev_a, dev_b, dev_c, N / 2);
+    cudaDeviceSynchronize();  
+    
     clock_t end = clock();
+    
+    printf("소요시간: %lf 초\n", (double)(end - start) / CLOCKS_PER_SEC);
+    
+    HANDLE_ERROR(cudaMemcpy(c, dev_c, N * sizeof(int), cudaMemcpyDeviceToHost));
 
-    printf("소요 시간: %lf 초\n", (double)(end - start) / CLOCKS_PER_SEC);
+    for (int i = 0; i < 10; i++) {  // 처음 10개만 출력
+        printf("%d + %d = %d\n", a[i], b[i], c[i]);
+    }
 
-    HANDLE_ERROR(cudaMemcpy(c_1, dev_c_1, N/2 * sizeof(int), cudaMemcpyDeviceToHost));
-    HANDLE_ERROR(cudaMemcpy(c_2, dev_c_2, N/2 * sizeof(int), cudaMemcpyDeviceToHost));
-
-    HANDLE_ERROR(cudaFree(dev_a_1));
-    HANDLE_ERROR(cudaFree(dev_b_1));
-    HANDLE_ERROR(cudaFree(dev_c_1));
-
-    HANDLE_ERROR(cudaFree(dev_a_2));
-    HANDLE_ERROR(cudaFree(dev_b_2));
-    HANDLE_ERROR(cudaFree(dev_c_2));
+    HANDLE_ERROR(cudaFree(dev_a));
+    HANDLE_ERROR(cudaFree(dev_b));
+    HANDLE_ERROR(cudaFree(dev_c));
 
     return 0;
 }
