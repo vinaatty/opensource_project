@@ -1,8 +1,8 @@
 #include "../common/book.h"
-#define N 10000  // N을 10000으로 설정
+#define N 10000
 
 __global__ void add(int *a, int *b, int *c, int start) {
-    int tid = blockIdx.x;  // 블록 인덱스를 사용
+    int tid = blockIdx.x; 
     if (tid < N / 2) {
         c[start + tid] = a[start + tid] + b[start + tid];
     }
@@ -26,11 +26,11 @@ int main(void) {
 
     clock_t start = clock();
     
-    // 첫 번째 Kernel 실행 (N/2 개만 처리)
+    // 첫 번째 커널 실행
     add<<<N / 2, 1>>>(dev_a, dev_b, dev_c, 0);
-    cudaDeviceSynchronize();  // 동기화
+    cudaDeviceSynchronize();  
 
-    // 두 번째 Kernel 실행 (나머지 N/2 개 처리)
+    // 두 번째 커널 실행
     add<<<N / 2, 1>>>(dev_a, dev_b, dev_c, N / 2);
     cudaDeviceSynchronize();  
     
