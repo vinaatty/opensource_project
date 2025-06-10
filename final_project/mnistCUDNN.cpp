@@ -664,63 +664,83 @@
          checkCUDNN( cudnnActivationForward(cudnnHandle, activDesc, &alpha, srcTensorDesc, srcData, &beta, dstTensorDesc, *dstData) );    
      }
  
-     int classify_example(const char* fname, const Layer_t<value_type>& conv1,
-                           const Layer_t<value_type>& conv2,
-                           const Layer_t<value_type>& ip1,
-                           const Layer_t<value_type>& ip2)
-     {
-         int n,c,h,w;
-         value_type *srcData = NULL, *dstData = NULL;
-         value_type imgData_h[IMAGE_H*IMAGE_W];
- 
-         readImage(fname, imgData_h);
- 
-         std::cout << "Performing forward propagation ...\n";
- 
-         checkCudaErrors( cudaMalloc((void**)&srcData, IMAGE_H*IMAGE_W*sizeof(value_type)) );
-         checkCudaErrors( cudaMemcpy(srcData, imgData_h,
-                                     IMAGE_H*IMAGE_W*sizeof(value_type),
-                                     cudaMemcpyHostToDevice) );
- 
-         n = c = 1; h = IMAGE_H; w = IMAGE_W;
-         convoluteForward(conv1, n, c, h, w, srcData, &dstData);
-         poolForward(n, c, h, w, dstData, &srcData);
- 
-         convoluteForward(conv2, n, c, h, w, srcData, &dstData);
-         poolForward(n, c, h, w, dstData, &srcData);
- 
-         fullyConnectedForward(ip1, n, c, h, w, srcData, &dstData);
-         activationForward(n, c, h, w, dstData, &srcData);
-         lrnForward(n, c, h, w, srcData, &dstData);
- 
-         fullyConnectedForward(ip2, n, c, h, w, dstData, &srcData);
-         softmaxForward(n, c, h, w, srcData, &dstData);
- 
-         //cuDNN and cuBLAS library calls are asynchronous w.r.t. the host.
-         // Need a device sync here before copying back the results.
-         checkCudaErrors (cudaDeviceSynchronize());
-         const int max_digits = 10;
-         // Take care of half precision
-         Convert<scaling_type> toReal;
-         value_type result[max_digits];
-         checkCudaErrors( cudaMemcpy(result, dstData, max_digits*sizeof(value_type), cudaMemcpyDeviceToHost) );
-         // 보정 가중치 적용
-         float six_bias = 1.20f;  // 6번 클래스 확률을 약간 증폭
-         result[6] = result[6] * six_bias;
+int classify_example(const char* fname, const Layer_t<value_type>& conv1,
+                       const Layer_t<value_type>& conv2,
+                       const Layer_t<value_type>& ip1,
+                       const Layer_t<value_type>& ip2)
+{
+    const int NUM_AUG = 5; // 여러 번 예측 반복 횟수
+    int votes[10] = {0};
+    typedef typename ScaleFactorTypeMap<value_type>::Type scaling_type;
 
-         int id = 0;
-         for (int i = 1; i < max_digits; i++)
-         {
-             if (toReal(result[id]) < toReal(result[i])) id = i;
-         }
- 
-         std::cout << "Resulting weights from Softmax:" << std::endl;
-         printDeviceVector(n*c*h*w, dstData);
- 
-         checkCudaErrors( cudaFree(srcData) );
-         checkCudaErrors( cudaFree(dstData) );
-         return id;
-     }
+    for (int repeat = 0; repeat < NUM_AUG; ++repeat) {
+        int n, c, h, w;
+        value_type *srcData = NULL, *dstData = NULL;
+        value_type imgData_h[IMAGE_H*IMAGE_W];
+
+        readImage(fname, imgData_h);
+
+        // 노이즈 추가 (약간씩만)
+        for (int idx = 0; idx < IMAGE_W*IMAGE_H; ++idx) {
+            double noise = ((rand() % 5) - 2) / 255.0; // -0.0078 ~ +0.0078
+            double v = static_cast<double>(imgData_h[idx]) + noise;
+            if (v < 0.0) v = 0.0;
+            if (v > 1.0) v = 1.0;
+            imgData_h[idx] = static_cast<value_type>(v);
+        }
+
+        checkCudaErrors( cudaMalloc((void**)&srcData, IMAGE_H*IMAGE_W*sizeof(value_type)) );
+        checkCudaErrors( cudaMemcpy(srcData, imgData_h,
+                                    IMAGE_H*IMAGE_W*sizeof(value_type),
+                                    cudaMemcpyHostToDevice) );
+
+        n = c = 1; h = IMAGE_H; w = IMAGE_W;
+        convoluteForward(conv1, n, c, h, w, srcData, &dstData);
+        poolForward(n, c, h, w, dstData, &srcData);
+
+        convoluteForward(conv2, n, c, h, w, srcData, &dstData);
+        poolForward(n, c, h, w, dstData, &srcData);
+
+        fullyConnectedForward(ip1, n, c, h, w, srcData, &dstData);
+        activationForward(n, c, h, w, dstData, &srcData);
+        lrnForward(n, c, h, w, srcData, &dstData);
+
+        fullyConnectedForward(ip2, n, c, h, w, dstData, &srcData);
+        softmaxForward(n, c, h, w, srcData, &dstData);
+
+        checkCudaErrors (cudaDeviceSynchronize());
+        const int max_digits = 10;
+        Convert<scaling_type> toReal;
+        value_type result[max_digits];
+        checkCudaErrors( cudaMemcpy(result, dstData, max_digits*sizeof(value_type), cudaMemcpyDeviceToHost) );
+        // 보정 가중치 적용
+        float six_bias = 1.40f;  // 6번 클래스 확률을 약간 증폭
+        result[6] = result[6] * six_bias;
+
+        int id = 0;
+        for (int i = 1; i < max_digits; i++) {
+            if (toReal(result[id]) < toReal(result[i])) id = i;
+        }
+
+        votes[id]++;
+
+        checkCudaErrors( cudaFree(srcData) );
+        checkCudaErrors( cudaFree(dstData) );
+    }
+
+    // 다수결 결과 반환
+    int max_vote = 0, best_id = 0;
+    for (int i = 0; i < 10; i++) {
+        if (votes[i] > max_vote) {
+            max_vote = votes[i];
+            best_id = i;
+        }
+    }
+    std::cout << "Voting Result: ";
+    for (int i = 0; i < 10; i++) std::cout << votes[i] << " ";
+    std::cout << "-> Final predict: " << best_id << std::endl;
+    return best_id;
+    }
  };
  
  #if !defined(CUDA_VERSION) || (CUDA_VERSION <= 7000)
