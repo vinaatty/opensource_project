@@ -546,3 +546,9 @@ Generated:
 	/home/user/GPU_yr/mnist_cudnn/mnistCUDNN/mnist_nsys_report1.nsys-rep
 	/home/user/GPU_yr/mnist_cudnn/mnistCUDNN/mnist_nsys_report1.sqlite
 
+| Name                             | Time(%) | Total(ns) | 설명                 |
+| -------------------------------- | ------- | --------- | ------------------ |
+| **gemv2T\_kernel 등 FC/행렬곱**      | 6.4     | 751,780   | Fully Connected 연산 |
+| **fft2d\_r2c\_16x16 등 FFT/Conv** | \~6%    | \~700,000 | Conv, FFT 등        |
+| pooling, softmax, etc.           | 3\~6%   | \~400,000 | 풀링, 소프트맥스 등        |
+| **LRN 계열 없음!!**                  | **0%**  | **0**     | (제거됨)              |
