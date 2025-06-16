@@ -399,4 +399,150 @@ CUDA API 호출 타임라인
     실제 커널 실행(cudaLaunchKernel)이 9%로 증가함.
     즉, 불필요한 malloc/free는 거의 사라짐!
 
-시도2. 
+시도2. LRN 레이어 제거
+Generating '/tmp/nsys-report-99ad.qdstrm'
+[1/8] [========================100%] mnist_nsys_report1.nsys-rep
+[2/8] [========================100%] mnist_nsys_report1.sqlite
+[3/8] Executing 'nvtx_sum' stats report
+SKIPPED: /home/user/GPU_yr/mnist_cudnn/mnistCUDNN/mnist_nsys_report1.sqlite does not contain NV Tools Extension (NVTX) data.
+[4/8] Executing 'osrt_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls    Avg (ns)       Med (ns)      Min (ns)     Max (ns)     StdDev (ns)            Name         
+ --------  ---------------  ---------  -------------  -------------  -----------  -----------  -------------  ----------------------
+     51.8    1,374,948,237         63   21,824,575.2      234,238.0        4,645  163,339,585   39,822,525.6  poll                  
+     44.0    1,168,088,533          3  389,362,844.3  500,056,410.0  167,947,797  500,084,326  191,751,056.3  pthread_cond_timedwait
+      3.8      101,105,927      2,715       37,239.8       17,646.0        1,024   10,856,631      336,489.4  ioctl                 
+      0.1        2,894,390         53       54,611.1       12,050.0        5,670      917,004      160,300.5  mmap64                
+      0.0        1,226,457         34       36,072.3        6,875.0        2,396      209,721       65,989.3  mmap                  
+      0.0        1,153,765        395        2,920.9        2,430.0        1,064       17,567        1,821.0  fopen                 
+      0.0          840,340         18       46,685.6       45,797.0        5,384      211,634       46,043.3  sem_timedwait         
+      0.0          792,609         28       28,307.5        1,566.5        1,003      536,543      104,544.7  read                  
+      0.0          512,942        197        2,603.8        2,476.0        1,006        8,061          768.3  fread                 
+      0.0          471,585         36       13,099.6        5,779.5        2,239      226,382       37,076.0  munmap                
+      0.0          275,041        207        1,328.7        1,301.0        1,028        4,255          324.5  fclose                
+      0.0          239,220          8       29,902.5       28,608.5       17,806       46,854        8,842.0  sem_wait              
+      0.0          229,617          2      114,808.5      114,808.5       93,481      136,136       30,161.6  pthread_join          
+      0.0          223,143         45        4,958.7        4,384.0        2,169       11,313        1,675.9  open64                
+      0.0          204,972         23        8,911.8        1,604.0        1,188       26,920       11,225.5  write                 
+      0.0          133,433          3       44,477.7       45,409.0       33,889       54,135       10,155.1  pthread_create        
+      0.0           83,906         36        2,330.7        2,310.5        2,054        3,417          281.5  putc                  
+      0.0           73,357          1       73,357.0       73,357.0       73,357       73,357            0.0  pthread_cond_wait     
+      0.0           61,032         16        3,814.5        3,062.5        2,036       10,529        2,532.7  fopen64               
+      0.0           27,669          1       27,669.0       27,669.0       27,669       27,669            0.0  fgets                 
+      0.0           18,101          6        3,016.8        3,370.0        1,018        4,278        1,252.5  open                  
+      0.0           16,949          7        2,421.3        2,176.0        1,049        3,995        1,064.2  fwrite                
+      0.0            9,765          3        3,255.0        3,888.0        1,407        4,470        1,626.7  pipe2                 
+      0.0            9,646          2        4,823.0        4,823.0        3,571        6,075        1,770.6  socket                
+      0.0            7,982          1        7,982.0        7,982.0        7,982        7,982            0.0  connect               
+      0.0            3,788          1        3,788.0        3,788.0        3,788        3,788            0.0  pthread_kill          
+      0.0            2,049          1        2,049.0        2,049.0        2,049        2,049            0.0  pthread_cond_signal   
+      0.0            1,572          1        1,572.0        1,572.0        1,572        1,572            0.0  pthread_cond_broadcast
+      0.0            1,401          1        1,401.0        1,401.0        1,401        1,401            0.0  bind                  
+
+[5/8] Executing 'cuda_api_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls    Avg (ns)       Med (ns)      Min (ns)     Max (ns)    StdDev (ns)                Name              
+ --------  ---------------  ---------  -------------  -------------  -----------  -----------  ------------  -------------------------------
+     75.0      824,993,640        448    1,841,503.7        6,917.0          516  608,505,757  29,657,909.4  cudaFree                       
+     13.9      152,549,154          1  152,549,154.0  152,549,154.0  152,549,154  152,549,154           0.0  cudaDeviceReset                
+      8.8       97,066,154      3,254       29,829.8        3,858.0          703   23,102,125     584,169.7  cudaLaunchKernel               
+      1.2       13,146,243        441       29,810.1        7,761.0        2,800      112,436      27,218.4  cudaMalloc                     
+      0.5        5,811,125        736        7,895.6        7,459.0        4,222      108,481       5,984.1  cudaMemcpy                     
+      0.1        1,400,295      1,130        1,239.2          794.0          239        7,418         767.9  cudaEventRecord                
+      0.1        1,184,653          4      296,163.3      289,183.5        7,121      599,165     333,151.6  cudaHostAlloc                  
+      0.1          826,711      1,040          794.9          836.5          254        2,158         312.2  cudaStreamWaitEvent            
+      0.1          619,737         14       44,266.9       42,183.0       27,660       67,222      13,916.7  cudaEventSynchronize           
+      0.1          614,775        190        3,235.7        3,198.0          778        7,285         607.7  cudaDeviceSynchronize          
+      0.1          571,822          4      142,955.5      143,234.5        5,132      280,221     156,722.5  cudaFreeHost                   
+      0.0          370,757          6       61,792.8       58,982.5       55,919       78,945       8,649.2  cudaGetDeviceProperties        
+      0.0          356,496         66        5,401.5        1,249.5        1,062       91,399      14,926.7  cudaStreamCreateWithFlags      
+      0.0          282,411      2,282          123.8          104.0           59        1,056          67.0  cuGetProcAddress               
+      0.0          137,651         66        2,085.6        1,588.5        1,149        9,710       1,517.8  cudaStreamDestroy              
+      0.0          134,280         90        1,492.0        1,482.0        1,337        2,177         112.7  cudaEventQuery                 
+      0.0           88,443        270          327.6          283.0          152        1,015         150.2  cudaStreamGetCaptureInfo_v10010
+      0.0           75,655          6       12,609.2       11,361.5          273       27,899      11,663.4  cudaMemsetAsync                
+      0.0           63,577         14        4,541.2        2,884.0        2,500       13,944       3,152.8  cudaStreamBeginCapture_v10000  
+      0.0           29,065         14        2,076.1        1,607.5          962        9,598       2,216.6  cudaGraphDestroy_v10000        
+      0.0           28,026         44          637.0          338.5          262        5,481         871.9  cudaEventCreateWithFlags       
+      0.0           23,817         48          496.2          290.0          179        3,985         581.5  cudaEventDestroy               
+      0.0           15,680         14        1,120.0        1,040.0          657        1,976         414.3  cudaStreamEndCapture_v10000    
+      0.0            7,865          6        1,310.8        1,427.0          820        1,620         304.9  cuInit                         
+      0.0            7,020          4        1,755.0        1,693.5        1,566        2,067         227.7  cudaEventCreate                
+      0.0            3,912          2        1,956.0        1,956.0        1,387        2,525         804.7  cudaGetDriverEntryPoint_v11030 
+      0.0              823          6          137.2           96.5           87          301          83.8  cuModuleGetLoadingMode         
+      0.0              711          1          711.0          711.0          711          711           0.0  cuCtxSynchronize               
+
+[6/8] Executing 'cuda_gpu_kern_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)                                                  Name                                                
+ --------  ---------------  ---------  --------  --------  --------  --------  -----------  ----------------------------------------------------------------------------------------------------
+      6.4          757,543        160   4,734.6   4,736.0     4,640     4,896         39.4  void gemv2T_kernel_val<int, int, float2, float2, float2, float2, (int)128, (int)16, (int)2, (int)2,…
+      6.1          717,411        160   4,483.8   4,704.0     3,552     5,472        908.4  void fft2d_r2c_16x16<__half>(float2 *, const T1 *, int, int, int, int, int, int, int, int)          
+      5.9          692,516        160   4,328.2   4,320.0     3,456     5,280        812.7  void fft2d_r2c_16x16<float>(float2 *, const T1 *, int, int, int, int, int, int, int, int)           
+      5.4          638,918         10  63,891.8  63,809.0    63,745    64,385        195.2  void explicit_convolve_sgemm<__half, int, (int)128, (int)6, (int)7, (int)3, (int)3, (int)5, (int)0,…
+      5.3          622,279         82   7,588.8   7,584.0     7,520     7,680         27.6  void fft2d_c2r_32x32<__half, (bool)0, (bool)0, (unsigned int)0, (bool)0, (bool)0>(T1 *, const float…
+      5.1          601,795         82   7,339.0   7,328.0     7,264     7,712         64.6  void fft2d_c2r_32x32<float, (bool)0, (bool)0, (unsigned int)0, (bool)0, (bool)0>(T1 *, const float2…
+      4.6          541,381         81   6,683.7   6,688.0     6,592     6,816         47.4  void fft2d_r2c_32x32<float, (bool)0, (unsigned int)5, (bool)0>(float2 *, const T1 *, int, int, int,…
+      4.6          540,256         81   6,669.8   6,688.0     6,592     6,720         35.8  void fft2d_r2c_32x32<__half, (bool)0, (unsigned int)5, (bool)0>(float2 *, const T1 *, int, int, int…
+      4.2          497,733         90   5,530.4   5,536.0     4,992     5,792        142.8  std::enable_if<!T7, void>::type internal::gemvx::kernel<int, int, float, float, float, float, (bool…
+      3.7          438,405         90   4,871.2   4,928.0     4,160     5,057        215.6  std::enable_if<!T7, void>::type internal::gemvx::kernel<int, int, __half, __half, __half, float, (b…
+      3.7          433,924        180   2,410.7   2,352.5     2,304     2,624         84.8  void cudnn::pooling_fw_4d_kernel<float, float, cudnn::maxpooling_func<float, float, (cudnnNanPropag…
+      3.5          415,300        162   2,563.6   2,560.0     2,496     2,656         29.0  void gemmk1_kernel<int, float2, (int)256, (int)5, (bool)1, (bool)0, (bool)0, (bool)0, cublasGemvTen…
+      3.5          408,199        180   2,267.8   2,304.0     2,176     2,433         79.4  void cudnn::pooling_fw_4d_kernel<__half, float, cudnn::maxpooling_func<float, __half, (cudnnNanProp…
+      3.2          372,640        180   2,070.2   2,080.0     2,016     2,240         25.1  void op_generic_tensor_kernel<(int)3, float, float, float, (int)256, (cudnnGenericOp_t)0, (cudnnNan…
+      3.0          352,224        180   1,956.8   1,952.0     1,920     2,176         24.7  void op_generic_tensor_kernel<(int)3, __half, float, __half, (int)256, (cudnnGenericOp_t)0, (cudnnN…
+      2.9          336,929         80   4,211.6   4,224.0     4,192     4,256         17.2  void fft2d_c2r_16x16<__half, (bool)0>(T1 *, float2 *, int, int, int, int, int, int, int, int, int, …
+      2.8          334,595         80   4,182.4   4,192.0     4,160     4,256         17.9  void fft2d_c2r_16x16<float, (bool)0>(T1 *, float2 *, int, int, int, int, int, int, int, int, int, i…
+      2.8          331,363         90   3,681.8   3,680.0     3,648     3,712         16.8  void gemv2T_kernel_val<int, int, float, float, float, float, (int)128, (int)16, (int)2, (int)2, (bo…
+      2.7          318,305         82   3,881.8   3,872.0     3,840     4,096         35.1  void fft2d_r2c_32x32<__half, (bool)0, (unsigned int)0, (bool)0>(float2 *, const T1 *, int, int, int…
+      2.6          302,146         22  13,733.9   4,480.0     3,616    33,280     11,210.0  void implicit_convolve_sgemm<float, float, (int)1024, (int)5, (int)5, (int)3, (int)3, (int)3, (int)…
+      2.4          285,441        161   1,772.9   1,536.0     1,344     2,176        384.4  void flip_filter<float, float>(T2 *, const T1 *, int, int, int, int)                                
+      2.4          284,259        161   1,765.6   1,440.0     1,344     2,176        383.2  void flip_filter<__half, __half>(T2 *, const T1 *, int, int, int, int)                              
+      2.3          268,931         82   3,279.6   3,233.0     3,200     3,552         66.5  void fft2d_r2c_32x32<float, (bool)0, (unsigned int)0, (bool)0>(float2 *, const T1 *, int, int, int,…
+      1.9          220,865         10  22,086.5  22,080.0    22,048    22,112         20.2  void cudnn::engines_precompiled::im2col4d_kernel<__half, long>(cudnn::engines_precompiled::im2col4d…
+      1.4          164,385         90   1,826.5   1,824.0     1,792     1,920         19.9  void dot_kernel<float, (int)128, (int)0, cublasDotParams<cublasGemvTensorStridedBatched<const __hal…
+      1.4          159,363         90   1,770.7   1,760.0     1,728     1,824         17.3  void op_generic_tensor_kernel<(int)1, float, float, float, (int)256, (cudnnGenericOp_t)8, (cudnnNan…
+      1.3          158,403         90   1,760.0   1,760.0     1,696     1,888         20.4  void reduce_1Block_kernel<float, (int)128, (int)7, cublasGemvTensorStridedBatched<float>, cublasGem…
+      1.3          148,162         90   1,646.2   1,632.0     1,632     1,696         17.4  void op_generic_tensor_kernel<(int)1, __half, float, __half, (int)256, (cudnnGenericOp_t)8, (cudnnN…
+      1.2          140,416         90   1,560.2   1,568.0     1,504     1,600         16.1  void softmax_fw_small_kernel<float, float, (int)2, (int)1, (int)16, (int)1>(T1 *, const T1 *, int, …
+      1.2          140,385         90   1,559.8   1,568.0     1,536     1,600         14.8  void softmax_fw_small_kernel<__half, float, (int)2, (int)1, (int)16, (int)1>(T1 *, const T1 *, int,…
+      0.4           44,768         10   4,476.8   4,448.0     4,416     4,640         63.0  void cudnn::cnn::conv2d_grouped_direct_kernel<(bool)0, (bool)1, (bool)0, (bool)0, (bool)0, (bool)0,…
+      0.3           40,544          2  20,272.0  20,272.0     1,856    38,688     26,044.2  void cudnn::engines_precompiled::nchwToNhwcKernel<float, __half, float, (bool)0, (bool)1, (cudnnKer…
+      0.1           17,697          4   4,424.3   4,336.5     4,160     4,864        336.8  void implicit_convolve_sgemm<__half, __half, (int)1024, (int)5, (int)5, (int)3, (int)3, (int)3, (in…
+      0.1            9,440          1   9,440.0   9,440.0     9,440     9,440          0.0  _5x_cudnn_ampere_scudnn_128x32_relu_interior_nn_v1                                                  
+      0.1            8,352          2   4,176.0   4,176.0     4,160     4,192         22.6  void gemmk1_kernel<int, float, (int)256, (int)5, (bool)0, (bool)0, (bool)0, (bool)0, cublasGemvTens…
+      0.1            6,816          1   6,816.0   6,816.0     6,816     6,816          0.0  void cudnn::winograd_nonfused::winogradForwardData9x9_5x5<float, __half>(cudnn::winograd_nonfused::…
+      0.1            6,784          1   6,784.0   6,784.0     6,784     6,784          0.0  void cudnn::winograd_nonfused::winogradForwardData9x9_5x5<float, float>(cudnn::winograd_nonfused::W…
+      0.1            6,720          1   6,720.0   6,720.0     6,720     6,720          0.0  void fft2d_r2c_32x32<__half, (bool)0, (unsigned int)5, (bool)1>(float2 *, const T1 *, int, int, int…
+      0.1            6,688          1   6,688.0   6,688.0     6,688     6,688          0.0  void fft2d_r2c_32x32<float, (bool)0, (unsigned int)5, (bool)1>(float2 *, const T1 *, int, int, int,…
+      0.0            5,568          1   5,568.0   5,568.0     5,568     5,568          0.0  void cudnn::winograd_nonfused::winogradForwardOutput9x9_5x5<float, __half>(cudnn::winograd_nonfused…
+      0.0            5,536          1   5,536.0   5,536.0     5,536     5,536          0.0  void cudnn::winograd_nonfused::winogradForwardOutput9x9_5x5<float, float>(cudnn::winograd_nonfused:…
+      0.0            5,472          2   2,736.0   2,736.0     2,720     2,752         22.6  void gemmk1_kernel<int, float2, (int)256, (int)5, (bool)0, (bool)0, (bool)0, (bool)0, cublasGemvTen…
+      0.0            4,384          1   4,384.0   4,384.0     4,384     4,384          0.0  void cudnn::cnn::conv2d_grouped_direct_kernel<(bool)0, (bool)1, (bool)0, (bool)0, (bool)0, (bool)0,…
+      0.0            2,528          2   1,264.0   1,264.0     1,216     1,312         67.9  void float2half_rn_kernel<float>(int, const T1 *, __half *)                                         
+      0.0            2,432          1   2,432.0   2,432.0     2,432     2,432          0.0  void cudnn::winograd_nonfused::winogradForwardFilter9x9_5x5<float, __half>(cudnn::winograd_nonfused…
+      0.0            2,432          1   2,432.0   2,432.0     2,432     2,432          0.0  void cudnn::winograd_nonfused::winogradForwardFilter9x9_5x5<float, float>(cudnn::winograd_nonfused:…
+      0.0            1,568          1   1,568.0   1,568.0     1,568     1,568          0.0  void cask__5x_cudnn::computeOffsetsKernel<(bool)0, (bool)0>(cask__5x_cudnn::ComputeOffsetsParams)   
+
+[7/8] Executing 'cuda_gpu_mem_time_sum' stats report
+
+ Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)            Operation           
+ --------  ---------------  -----  --------  --------  --------  --------  -----------  ------------------------------
+     44.0          444,098    360   1,233.6   1,248.0     1,184     1,408         22.3  [CUDA memcpy Device-to-Device]
+     39.3          396,547    196   2,023.2     528.5       416   142,305     14,105.7  [CUDA memcpy Host-to-Device]  
+     16.0          161,856    180     899.2     864.0       832     1,440         86.4  [CUDA memcpy Device-to-Host]  
+      0.7            7,073      4   1,768.3   1,824.0     1,472     1,953        206.7  [CUDA memset]                 
+
+[8/8] Executing 'cuda_gpu_mem_size_sum' stats report
+
+ Total (MB)  Count  Avg (MB)  Med (MB)  Min (MB)  Max (MB)  StdDev (MB)            Operation           
+ ----------  -----  --------  --------  --------  --------  -----------  ------------------------------
+      3.821    196     0.019     0.002     0.000     1.600        0.161  [CUDA memcpy Host-to-Device]  
+      0.275    360     0.001     0.001     0.000     0.002        0.001  [CUDA memcpy Device-to-Device]
+      0.052      4     0.013     0.013     0.013     0.013        0.000  [CUDA memset]                 
+      0.005    180     0.000     0.000     0.000     0.000        0.000  [CUDA memcpy Device-to-Host]  
+
+Generated:
+	/home/user/GPU_yr/mnist_cudnn/mnistCUDNN/mnist_nsys_report1.nsys-rep
+	/home/user/GPU_yr/mnist_cudnn/mnistCUDNN/mnist_nsys_report1.sqlite
+
