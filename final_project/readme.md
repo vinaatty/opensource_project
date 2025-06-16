@@ -1,3 +1,11 @@
+2. 설계 및 구현
+기존 모델은 다음과 같은 구조로 구성된다:
+입력: 28x28 흑백 이미지
+Conv1 (20 filters, 5x5) + ReLU + MaxPool
+Conv2 (50 filters, 5x5) + ReLU + MaxPool
+FC1 (800→500) + ReLU + LRN
+FC2 (500→10) + Softmax
+2.2 개선 사항
 
 valid_set_of_6 폴더: 15장의 6.pgm
 인식은 됨 -> 7/15, (기존 1,3,5 도 잘 인식함)
